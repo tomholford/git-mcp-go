@@ -18,6 +18,7 @@ This MCP server provides the following Git operations as tools:
 - **git_checkout**: Switches branches
 - **git_show**: Shows the contents of a commit
 - **git_init**: Initialize a new Git repository
+- **git_push**: Pushes local commits to a remote repository
 
 ## Installation
 

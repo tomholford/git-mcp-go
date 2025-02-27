@@ -8,6 +8,7 @@ import (
 
 	"github.com/geropl/git-mcp-go/pkg/gitops"
 	"github.com/go-git/go-git/v5"
+	"github.com/go-git/go-git/v5/config"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/object"
 )
@@ -257,4 +258,48 @@ func (g *GoGitOperations) ShowCommit(repoPath string, revision string) (string, 
 	// go-git doesn't have a direct equivalent to git show
 	// We'll use git command for this operation
 	return gitops.RunGitCommand(repoPath, "show", revision)
+}
+
+// PushChanges pushes local commits to a remote repository
+func (g *GoGitOperations) PushChanges(repoPath string, remote string, branch string) (string, error) {
+	repo, err := git.PlainOpen(repoPath)
+	if err != nil {
+		return "", fmt.Errorf("failed to open repository: %w", err)
+	}
+	
+	// Use "origin" as default remote if not specified
+	if remote == "" {
+		remote = "origin"
+	}
+	
+	// Determine refspec based on branch
+	var refspec string
+	if branch == "" {
+		// Get current branch
+		head, err := repo.Head()
+		if err != nil {
+			return "", fmt.Errorf("failed to get HEAD: %w", err)
+		}
+		if !head.Name().IsBranch() {
+			return "", fmt.Errorf("HEAD is not a branch")
+		}
+		refspec = head.Name().String()
+	} else {
+		refspec = plumbing.NewBranchReferenceName(branch).String()
+	}
+	
+	// Push to remote
+	err = repo.Push(&git.PushOptions{
+		RemoteName: remote,
+		RefSpecs:   []config.RefSpec{config.RefSpec(refspec + ":" + refspec)},
+	})
+	
+	if err != nil {
+		if err == git.NoErrAlreadyUpToDate {
+			return "Everything up-to-date", nil
+		}
+		return "", fmt.Errorf("failed to push: %w", err)
+	}
+	
+	return fmt.Sprintf("Successfully pushed to %s/%s", remote, branch), nil
 }

@@ -212,6 +212,22 @@ func (s *GitServer) RegisterTools() {
 		),
 	)
 	s.server.AddTool(initTool, s.gitInitHandler)
+
+	// Register git_push tool
+	pushTool := mcp.NewTool("git_push",
+		mcp.WithDescription("Pushes local commits to a remote repository"),
+		mcp.WithString("repo_path",
+			mcp.Required(),
+			mcp.Description("Path to Git repository"),
+		),
+		mcp.WithString("remote",
+			mcp.Description("Remote name (default: origin)"),
+		),
+		mcp.WithString("branch",
+			mcp.Description("Branch name to push (default: current branch)"),
+		),
+	)
+	s.server.AddTool(pushTool, s.gitPushHandler)
 }
 
 // Serve starts the MCP server
@@ -504,6 +520,39 @@ func (s *GitServer) gitInitHandler(ctx context.Context, request mcp.CallToolRequ
 	result, err := s.gitOps.InitRepo(repoPath)
 	if err != nil {
 		return mcp.NewToolResultError(fmt.Sprintf("Failed to initialize repository: %v", err)), nil
+	}
+
+	return mcp.NewToolResultText(result), nil
+}
+
+func (s *GitServer) gitPushHandler(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	repoPath, ok := request.Params.Arguments["repo_path"].(string)
+	if !ok {
+		// If repo_path is not provided but we have a default, use it
+		if s.repoPath != "" {
+			repoPath = s.repoPath
+		} else {
+			return mcp.NewToolResultError("repo_path must be a string"), nil
+		}
+	}
+
+	remote := ""
+	if remoteInterface, ok := request.Params.Arguments["remote"]; ok {
+		if remoteStr, ok := remoteInterface.(string); ok {
+			remote = remoteStr
+		}
+	}
+
+	branch := ""
+	if branchInterface, ok := request.Params.Arguments["branch"]; ok {
+		if branchStr, ok := branchInterface.(string); ok {
+			branch = branchStr
+		}
+	}
+
+	result, err := s.gitOps.PushChanges(repoPath, remote, branch)
+	if err != nil {
+		return mcp.NewToolResultError(fmt.Sprintf("Failed to push changes: %v", err)), nil
 	}
 
 	return mcp.NewToolResultText(result), nil

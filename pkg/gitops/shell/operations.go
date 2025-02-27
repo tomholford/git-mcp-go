@@ -139,3 +139,21 @@ func (s *ShellGitOperations) InitRepo(repoPath string) (string, error) {
 func (s *ShellGitOperations) ShowCommit(repoPath string, revision string) (string, error) {
 	return gitops.RunGitCommand(repoPath, "show", revision)
 }
+
+// PushChanges pushes local commits to a remote repository
+func (s *ShellGitOperations) PushChanges(repoPath string, remote string, branch string) (string, error) {
+	args := []string{"push"}
+	if remote != "" {
+		args = append(args, remote)
+	}
+	if branch != "" {
+		args = append(args, branch)
+	}
+	
+	output, err := gitops.RunGitCommand(repoPath, args...)
+	if err != nil {
+		return "", fmt.Errorf("failed to push changes: %w", err)
+	}
+	
+	return output, nil
+}
