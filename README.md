@@ -104,6 +104,20 @@ This server is implemented using:
 
 For operations not supported by go-git, the server falls back to using the Git CLI.
 
+## Testing
+
+The server includes comprehensive tests for all Git operations. The tests are designed to run against both implementation modes:
+
+```bash
+# Run all tests
+go test ./pkg -v
+
+# Run specific tests
+go test ./pkg -v -run TestGitOperations/push
+```
+
+The test suite creates temporary repositories for each test case and verifies that the operations work correctly in both modes.
+
 ## License
 
 This project is licensed under the MIT License.

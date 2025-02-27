@@ -274,6 +274,7 @@ func (g *GoGitOperations) PushChanges(repoPath string, remote string, branch str
 	
 	// Determine refspec based on branch
 	var refspec string
+	var branchName string
 	if branch == "" {
 		// Get current branch
 		head, err := repo.Head()
@@ -284,8 +285,10 @@ func (g *GoGitOperations) PushChanges(repoPath string, remote string, branch str
 			return "", fmt.Errorf("HEAD is not a branch")
 		}
 		refspec = head.Name().String()
+		branchName = head.Name().Short()
 	} else {
 		refspec = plumbing.NewBranchReferenceName(branch).String()
+		branchName = branch
 	}
 	
 	// Push to remote
@@ -301,5 +304,5 @@ func (g *GoGitOperations) PushChanges(repoPath string, remote string, branch str
 		return "", fmt.Errorf("failed to push: %w", err)
 	}
 	
-	return fmt.Sprintf("Successfully pushed to %s/%s", remote, branch), nil
+	return fmt.Sprintf("Successfully pushed to %s/%s", remote, branchName), nil
 }

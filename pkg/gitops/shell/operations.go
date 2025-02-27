@@ -155,5 +155,14 @@ func (s *ShellGitOperations) PushChanges(repoPath string, remote string, branch 
 		return "", fmt.Errorf("failed to push changes: %w", err)
 	}
 	
-	return output, nil
+	// Check if the output indicates that everything is up-to-date
+	if strings.Contains(output, "up-to-date") {
+		return output, nil
+	}
+	
+	// Format the output to match the expected format
+	return fmt.Sprintf("Successfully pushed to %s/%s\n%s", 
+		remote, 
+		branch, 
+		output), nil
 }
