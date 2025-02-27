@@ -142,6 +142,19 @@ git tag v1.0.0
 git push origin v1.0.0
 ```
 
+## Development
+
+### VSCode Configuration
+
+This repository includes VSCode configuration files in the `.vscode` directory:
+
+- **settings.json**: Editor settings for Go development
+- **launch.json**: Debug configurations for running the server
+- **tasks.json**: Common tasks like build, test, and run
+- **extensions.json**: Recommended extensions for this project
+
+These configurations are shared with the repository, ensuring a consistent development experience for all contributors.
+
 ## License
 
 This project is licensed under the MIT License.

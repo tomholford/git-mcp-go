@@ -1,0 +1,21 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Launch Git MCP Server",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "${workspaceFolder}",
+            "args": ["-v", "-r", "${workspaceFolder}"]
+        },
+        {
+            "name": "Launch with go-git mode",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "${workspaceFolder}",
+            "args": ["-v", "-mode", "go-git", "-r", "${workspaceFolder}"]
+        }
+    ]
+}

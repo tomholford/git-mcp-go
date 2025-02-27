@@ -1,0 +1,35 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Build",
+            "type": "shell",
+            "command": "go build",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        },
+        {
+            "label": "Test",
+            "type": "shell",
+            "command": "go test ./...",
+            "group": {
+                "kind": "test",
+                "isDefault": true
+            }
+        },
+        {
+            "label": "Run (shell mode)",
+            "type": "shell",
+            "command": "./git-mcp-go -v -r ${workspaceFolder}",
+            "dependsOn": ["Build"]
+        },
+        {
+            "label": "Run (go-git mode)",
+            "type": "shell",
+            "command": "./git-mcp-go -v -mode go-git -r ${workspaceFolder}",
+            "dependsOn": ["Build"]
+        }
+    ]
+}
