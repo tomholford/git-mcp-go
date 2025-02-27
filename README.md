@@ -27,6 +27,10 @@ This MCP server provides the following Git operations as tools:
 - Go 1.18 or higher
 - Git installed on your system
 
+### Download Prebuilt Binaries
+
+You can download prebuilt binaries for your platform from the [GitHub Releases](https://github.com/geropl/git-mcp-go/releases) page.
+
 ### Building from Source
 
 ```bash
@@ -117,6 +121,20 @@ go test ./pkg -v -run TestGitOperations/push
 ```
 
 The test suite creates temporary repositories for each test case and verifies that the operations work correctly in both modes.
+
+## Continuous Integration
+
+This project uses GitHub Actions for continuous integration and deployment:
+
+- Automated tests run on every push and pull request
+- Automated builds for multiple platforms (Linux, macOS, Windows)
+- Automatic releases are created for every push to the main branch
+- Tagged releases can be created manually by pushing a tag with the format `v*`
+
+The release workflow builds binaries for:
+- Linux (amd64, arm64)
+- macOS (amd64, arm64)
+- Windows (amd64)
 
 ## License
 

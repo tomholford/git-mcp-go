@@ -1,0 +1,80 @@
+name: Build and Release
+
+on:
+  push:
+    branches: [ main ]
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    name: Build and Release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.21'
+
+      - name: Build for Linux
+        run: |
+          GOOS=linux GOARCH=amd64 go build -o git-mcp-go-linux-amd64
+          GOOS=linux GOARCH=arm64 go build -o git-mcp-go-linux-arm64
+
+      - name: Build for macOS
+        run: |
+          GOOS=darwin GOARCH=amd64 go build -o git-mcp-go-darwin-amd64
+          GOOS=darwin GOARCH=arm64 go build -o git-mcp-go-darwin-arm64
+
+      - name: Build for Windows
+        run: |
+          GOOS=windows GOARCH=amd64 go build -o git-mcp-go-windows-amd64.exe
+
+      - name: Run tests
+        run: go test ./...
+
+      - name: Create Release
+        id: create_release
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: |
+            git-mcp-go-linux-amd64
+            git-mcp-go-linux-arm64
+            git-mcp-go-darwin-amd64
+            git-mcp-go-darwin-arm64
+            git-mcp-go-windows-amd64.exe
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # If this is a push to main but not a tag, create an automatic release
+      - name: Get version
+        id: get_version
+        if: github.ref == 'refs/heads/main'
+        run: |
+          VERSION=$(date +'%Y.%m.%d-%H%M%S')
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+          echo "::set-output name=version::$VERSION"
+
+      - name: Create Automatic Release
+        id: create_auto_release
+        uses: softprops/action-gh-release@v1
+        if: github.ref == 'refs/heads/main'
+        with:
+          tag_name: v${{ env.VERSION }}
+          name: Release v${{ env.VERSION }}
+          files: |
+            git-mcp-go-linux-amd64
+            git-mcp-go-linux-arm64
+            git-mcp-go-darwin-amd64
+            git-mcp-go-darwin-arm64
+            git-mcp-go-windows-amd64.exe
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
