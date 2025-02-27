@@ -3,7 +3,6 @@ package main
 import (
 	"flag"
 	"fmt"
-	"log"
 	"os"
 	"strings"
 
@@ -25,24 +24,23 @@ func main() {
 	flag.BoolVar(&verbose, "v", false, "Enable verbose logging")
 	flag.Parse()
 
-	// Set up logging
-	if verbose {
-		log.SetOutput(os.Stderr)
-	} else {
-		log.SetOutput(nil)
-	}
-
 	// Create the appropriate GitOperations implementation
 	var gitOps gitops.GitOperations
 	switch strings.ToLower(mode) {
 	case "go-git":
-		log.Println("Using go-git implementation")
+		if verbose {
+			fmt.Println("Using go-git implementation")
+		}
 		gitOps = gogit.NewGoGitOperations()
 	case "shell":
-		log.Println("Using shell implementation")
+		if verbose {
+			fmt.Println("Using shell implementation")
+		}
 		gitOps = shell.NewShellGitOperations()
 	default:
-		log.Println("Using shell implementation")
+		if verbose {
+			fmt.Println("Using shell implementation")
+		}
 		gitOps = shell.NewShellGitOperations()
 	}
 
@@ -53,7 +51,9 @@ func main() {
 	gitServer.RegisterTools()
 
 	// Start the server
-	log.Println("Starting Git MCP Server...")
+	if verbose {
+		fmt.Println("Starting Git MCP Server...")
+	}
 	if err := gitServer.Serve(); err != nil {
 		fmt.Fprintf(os.Stderr, "Server error: %v\n", err)
 		os.Exit(1)
