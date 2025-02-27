@@ -126,15 +126,21 @@ The test suite creates temporary repositories for each test case and verifies th
 
 This project uses GitHub Actions for continuous integration and deployment:
 
-- Automated tests run on every push and pull request
-- Automated builds for multiple platforms (Linux, macOS, Windows)
-- Automatic releases are created for every push to the main branch
-- Tagged releases can be created manually by pushing a tag with the format `v*`
+- Automated tests run on every pull request to the main branch
+- Releases are created when a tag with the format `v*` is pushed
+- Each release includes binaries for multiple platforms:
+  - Linux (amd64, arm64)
+  - macOS (amd64, arm64)
+  - Windows (amd64)
 
-The release workflow builds binaries for:
-- Linux (amd64, arm64)
-- macOS (amd64, arm64)
-- Windows (amd64)
+To create a new release:
+```bash
+# Tag the current commit
+git tag v1.0.0
+
+# Push the tag to GitHub
+git push origin v1.0.0
+```
 
 ## License
 
