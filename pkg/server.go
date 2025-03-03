@@ -13,22 +13,24 @@ import (
 
 // GitServer represents the Git MCP server
 type GitServer struct {
-	server   *server.MCPServer
-	repoPath string
-	gitOps   gitops.GitOperations
+	server      *server.MCPServer
+	repoPath    string
+	gitOps      gitops.GitOperations
+	writeAccess bool
 }
 
 // NewGitServer creates a new Git MCP server
-func NewGitServer(repoPath string, gitOps gitops.GitOperations) *GitServer {
+func NewGitServer(repoPath string, gitOps gitops.GitOperations, writeAccess bool) *GitServer {
 	s := server.NewMCPServer(
 		"Git MCP Server",
 		"1.0.0",
 	)
 
 	return &GitServer{
-		server:   s,
-		repoPath: repoPath,
-		gitOps:   gitOps,
+		server:      s,
+		repoPath:    repoPath,
+		gitOps:      gitOps,
+		writeAccess: writeAccess,
 	}
 }
 
@@ -36,7 +38,7 @@ func NewGitServer(repoPath string, gitOps gitops.GitOperations) *GitServer {
 func (s *GitServer) RegisterTools() {
 	// Register git_status tool
 	var repoPathDesc string
-	
+
 	if s.repoPath == "" {
 		repoPathDesc = "Path to Git repository"
 		s.server.AddTool(mcp.NewTool("git_status",
@@ -213,21 +215,23 @@ func (s *GitServer) RegisterTools() {
 	)
 	s.server.AddTool(initTool, s.gitInitHandler)
 
-	// Register git_push tool
-	pushTool := mcp.NewTool("git_push",
-		mcp.WithDescription("Pushes local commits to a remote repository"),
-		mcp.WithString("repo_path",
-			mcp.Required(),
-			mcp.Description("Path to Git repository"),
-		),
-		mcp.WithString("remote",
-			mcp.Description("Remote name (default: origin)"),
-		),
-		mcp.WithString("branch",
-			mcp.Description("Branch name to push (default: current branch)"),
-		),
-	)
-	s.server.AddTool(pushTool, s.gitPushHandler)
+	if s.writeAccess {
+		// Register git_push tool
+		pushTool := mcp.NewTool("git_push",
+			mcp.WithDescription("Pushes local commits to a remote repository (requires --write-access flag)"),
+			mcp.WithString("repo_path",
+				mcp.Required(),
+				mcp.Description("Path to Git repository"),
+			),
+			mcp.WithString("remote",
+				mcp.Description("Remote name (default: origin)"),
+			),
+			mcp.WithString("branch",
+				mcp.Description("Branch name to push (default: current branch)"),
+			),
+		)
+		s.server.AddTool(pushTool, s.gitPushHandler)
+	}
 }
 
 // Serve starts the MCP server
@@ -526,6 +530,11 @@ func (s *GitServer) gitInitHandler(ctx context.Context, request mcp.CallToolRequ
 }
 
 func (s *GitServer) gitPushHandler(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	// Check if write access is enabled
+	if !s.writeAccess {
+		return mcp.NewToolResultError("Write access is disabled. Use --write-access flag to enable remote operations."), nil
+	}
+
 	repoPath, ok := request.Params.Arguments["repo_path"].(string)
 	if !ok {
 		// If repo_path is not provided but we have a default, use it

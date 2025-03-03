@@ -18,7 +18,7 @@ This MCP server provides the following Git operations as tools:
 - **git_checkout**: Switches branches
 - **git_show**: Shows the contents of a commit
 - **git_init**: Initialize a new Git repository
-- **git_push**: Pushes local commits to a remote repository
+- **git_push**: Pushes local commits to a remote repository (requires --write-access flag)
 
 ## Installation
 
@@ -50,17 +50,23 @@ go build -o git-mcp-go .
 Usage of git-mcp-go:
   -r string
         Git repository path (shorthand)
-  -repository string
+  --repository string
         Git repository path
-  -mode string
+  --mode string
         Git operation mode: 'shell' or 'go-git' (default "shell")
   -v    Enable verbose logging
+  --write-access
+        Enable write access for remote operations (push) (default false)
 ```
 
-The `-mode` flag allows you to choose between two different implementations:
+Note: All non-shorthand flags require a leading double dash (--).
+
+The `--mode` flag allows you to choose between two different implementations:
 
 - **shell**: Uses the Git CLI commands via shell execution (default)
 - **go-git**: Uses the go-git library for Git operations where possible
+
+The `--write-access` flag enables operations that modify remote state (currently only the push operation). By default, this is disabled for safety.
 
 ### Running the Server
 
@@ -72,7 +78,10 @@ The `-mode` flag allows you to choose between two different implementations:
 ./git-mcp-go -v -r /path/to/git/repository
 
 # Run with go-git implementation
-./git-mcp-go -mode go-git -r /path/to/git/repository
+./git-mcp-go --mode go-git -r /path/to/git/repository
+
+# Enable write access for remote operations
+./git-mcp-go -r /path/to/git/repository --write-access
 ```
 
 ### Integration with Claude Desktop
@@ -83,18 +92,18 @@ Add this to your `claude_desktop_config.json`:
 "mcpServers": {
   "git": {
     "command": "/path/to/git-mcp-go",
-    "args": ["-mode", "shell", "-r", "/path/to/git/repository"]
+    "args": ["--mode", "shell", "-r", "/path/to/git/repository"]
   }
 }
 ```
 
-Or if you prefer the go-git implementation:
+Or if you prefer the go-git implementation with write access enabled:
 
 ```json
 "mcpServers": {
   "git": {
     "command": "/path/to/git-mcp-go",
-    "args": ["-mode", "go-git", "-r", "/path/to/git/repository"]
+    "args": ["--mode", "go-git", "-r", "/path/to/git/repository", "--write-access"]
   }
 }
 ```
