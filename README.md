@@ -86,13 +86,32 @@ The `--write-access` flag enables operations that modify remote state (currently
 
 ### Integration with Claude Desktop
 
-Add this to your `claude_desktop_config.json`:
+#### Automatic Installation and Registration
+
+The easiest way to install and register the Git MCP server with Cline is to use the provided registration script:
+
+```bash
+# Download and run the registration script with a repository path (required)
+curl -s https://raw.githubusercontent.com/geropl/git-mcp-go/main/scripts/register-cline.sh | bash -s -- ~/my-repo
+
+# With write access enabled
+curl -s https://raw.githubusercontent.com/geropl/git-mcp-go/main/scripts/register-cline.sh | bash -s -- ~/my-repo true
+```
+
+The script will:
+1. Check if git-mcp-go is already installed, and download it if needed
+2. Register it with Cline by updating the MCP settings file
+3. Configure it with the specified repository path and optional parameters
+
+#### Manual Configuration
+
+Alternatively, you can manually add this to your `claude_desktop_config.json`:
 
 ```json
 "mcpServers": {
   "git": {
     "command": "/path/to/git-mcp-go",
-    "args": ["--mode", "shell", "-r", "/path/to/git/repository"]
+    "args": ["-r", "/path/to/git/repository", "--mode", "shell"]
   }
 }
 ```
@@ -103,7 +122,7 @@ Or if you prefer the go-git implementation with write access enabled:
 "mcpServers": {
   "git": {
     "command": "/path/to/git-mcp-go",
-    "args": ["--mode", "go-git", "-r", "/path/to/git/repository", "--write-access"]
+    "args": ["-r", "/path/to/git/repository", "--write-access", "--mode", "go-git"]
   }
 }
 ```
@@ -113,7 +132,7 @@ Or if you prefer the go-git implementation with write access enabled:
 This server is implemented using:
 
 - [mcp-go](https://github.com/mark3labs/mcp-go): Go SDK for the Model Context Protocol
-- [go-git](https://github.com/go-git/go-git): Pure Go implementation of Git
+- [go-git](https://github.com/go-git/go-git): Pure Go implementation of Git (used for the `go-git` mode)
 
 For operations not supported by go-git, the server falls back to using the Git CLI.
 
