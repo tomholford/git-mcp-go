@@ -67,7 +67,7 @@ fi
 # Configure cline to use the MCP server
 # This is where Cline looks for MCP server configurations
 CLINE_CONFIG_DIR="$HOME/.vscode-server/data/User/globalStorage/saoudrizwan.claude-dev/settings"
-mkdir -p $CLINE_CONFIG_DIR
+mkdir -p "$CLINE_CONFIG_DIR"
 
 CLINE_MCP_SETTINGS="$CLINE_CONFIG_DIR/cline_mcp_settings.json"
 
@@ -100,7 +100,7 @@ fi
 SERVER_ARGS="$SERVER_ARGS]"
 
 # Merge the existing settings with the new MCP server configuration
-cat <<EOF > $CLINE_MCP_SETTINGS.new
+cat <<EOF > "$CLINE_MCP_SETTINGS.new"
 {
   "mcpServers": {
     "git": {
@@ -116,13 +116,13 @@ EOF
 if [ -f "$CLINE_MCP_SETTINGS" ]; then
     echo "Found existing Cline MCP settings at $CLINE_MCP_SETTINGS"
     echo "Merging with new MCP server configuration..."
-    jq -s '.[0] * .[1]' $CLINE_MCP_SETTINGS $CLINE_MCP_SETTINGS.new > $CLINE_MCP_SETTINGS.tmp
-    mv $CLINE_MCP_SETTINGS.tmp $CLINE_MCP_SETTINGS
+    jq -s '.[0] * .[1]' "$CLINE_MCP_SETTINGS" "$CLINE_MCP_SETTINGS.new" > "$CLINE_MCP_SETTINGS.tmp"
+    mv "$CLINE_MCP_SETTINGS.tmp" "$CLINE_MCP_SETTINGS"
 else
     echo "Creating new Cline MCP settings at $CLINE_MCP_SETTINGS"
-    mv $CLINE_MCP_SETTINGS.new $CLINE_MCP_SETTINGS
+    mv "$CLINE_MCP_SETTINGS.new" "$CLINE_MCP_SETTINGS"
 fi
-rm -f $CLINE_MCP_SETTINGS.new
+rm -f "$CLINE_MCP_SETTINGS.new"
 
 echo "Cline MCP settings updated at $CLINE_MCP_SETTINGS"
 echo "Git MCP server has been registered with the following configuration:"
