@@ -20,11 +20,11 @@ func main() {
 	var writeAccess bool
 
 	// Update flags to use double dashes for non-shorthand flags
-	flag.StringVar(&repoPath, "--repository", "", "Git repository path")
+	flag.StringVar(&repoPath, "repository", "", "Git repository path")
 	flag.StringVar(&repoPath, "r", "", "Git repository path (shorthand)")
-	flag.StringVar(&mode, "--mode", "shell", "Git operation mode: 'shell' or 'go-git'")
+	flag.StringVar(&mode, "mode", "shell", "Git operation mode: 'shell' or 'go-git'")
 	flag.BoolVar(&verbose, "v", false, "Enable verbose logging")
-	flag.BoolVar(&writeAccess, "--write-access", false, "Enable write access for remote operations (push)")
+	flag.BoolVar(&writeAccess, "write-access", false, "Enable write access for remote operations (push)")
 	flag.Parse()
 
 	// Create the appropriate GitOperations implementation
