@@ -18,7 +18,7 @@ This MCP server provides the following Git operations as tools:
 - **git_checkout**: Switches branches
 - **git_show**: Shows the contents of a commit
 - **git_init**: Initialize a new Git repository
-- **git_push**: Pushes local commits to a remote repository (requires --write-access flag)
+- **git_push**: Pushes local commits to a remote repository (requires `--write-access` flag)
 
 ## Installation
 
@@ -44,22 +44,42 @@ go build -o git-mcp-go .
 
 ## Usage
 
-### Command Line Options
+### Command Line Structure
+
+The Git MCP Server now uses a command-line structure with subcommands:
 
 ```
-Usage of git-mcp-go:
-  -r string
-        Git repository path (shorthand)
-  --repository string
-        Git repository path
-  --mode string
-        Git operation mode: 'shell' or 'go-git' (default "shell")
-  -v    Enable verbose logging
-  --write-access
-        Enable write access for remote operations (push) (default false)
+git-mcp-go
+├── serve [flags]
+│   ├── --repository, -r <path>
+│   ├── --mode <shell|go-git>
+│   ├── --write-access
+│   └── --verbose, -v
+└── setup [flags]
+    ├── --repository, -r <path>
+    ├── --mode <shell|go-git>
+    ├── --write-access
+    ├── --auto-approve <tool-list|allow-read-only|allow-local-only>
+    └── --tool <cline>
 ```
 
-Note: All non-shorthand flags require a leading double dash (--).
+### `serve` Command
+
+The `serve` command starts the Git MCP server:
+
+```bash
+# Run with a specific repository
+./git-mcp-go serve -r /path/to/git/repository
+
+# Run with verbose logging
+./git-mcp-go serve -v -r /path/to/git/repository
+
+# Run with go-git implementation
+./git-mcp-go serve --mode go-git -r /path/to/git/repository
+
+# Enable write access for remote operations
+./git-mcp-go serve -r /path/to/git/repository --write-access
+```
 
 The `--mode` flag allows you to choose between two different implementations:
 
@@ -68,42 +88,55 @@ The `--mode` flag allows you to choose between two different implementations:
 
 The `--write-access` flag enables operations that modify remote state (currently only the push operation). By default, this is disabled for safety.
 
-### Running the Server
+### `setup` Command
+
+The `setup` command sets up the Git MCP server for use with an AI assistant. Copies itself to `~/mcp-servers/git-mcp-go` and modifies the tools config (cline: `cline_mcp_settings.json`) to use that binary.
 
 ```bash
-# Run with a specific repository
-./git-mcp-go -r /path/to/git/repository
+# Set up for Cline with a specific repository
+./git-mcp-go setup -r /path/to/git/repository
 
-# Run with verbose logging
-./git-mcp-go -v -r /path/to/git/repository
+# Set up with write access enabled
+./git-mcp-go setup -r /path/to/git/repository --write-access
 
-# Run with go-git implementation
-./git-mcp-go --mode go-git -r /path/to/git/repository
+# Set up with auto-approval for read-only tools
+./git-mcp-go setup -r /path/to/git/repository --auto-approve=allow-read-only
 
-# Enable write access for remote operations
-./git-mcp-go -r /path/to/git/repository --write-access
+# Set up with specific tools auto-approved
+./git-mcp-go setup -r /path/to/git/repository --auto-approve=git_status,git_log
+
+# Set up with write access and auto-approval for read-only tools
+./git-mcp-go setup -r /path/to/git/repository --write-access --auto-approve=allow-read-only
 ```
 
-### Integration with Claude Desktop
+The `--auto-approve` flag allows you to specify which tools should be auto-approved (not require explicit user approval):
 
-#### Automatic Installation and Registration
+- **allow-read-only**: Auto-approve all read-only tools (git_status, git_diff_unstaged, git_diff_staged, git_log, git_show, git_diff)
+- **allow-local-only**: Auto-approve all local-only tools (incl. git_commit, git_add, git_reset, but not git_push)
+- **comma-separated list**: Auto-approve specific tools (e.g., git_status,git_log)
 
-The easiest way to install and register the Git MCP server with Cline is to use the provided registration script:
+## Installation
+
+### Automatic Installation and Configuration
+
+The easiest way to install and register the Git MCP server with Cline is to use the setup command:
 
 ```bash
-# Download and run the registration script with a repository path (required)
-curl -s https://raw.githubusercontent.com/geropl/git-mcp-go/main/scripts/register-cline.sh | bash -s -- ~/my-repo
+# Download linux binary for the latest release
+RELEASE=$(curl -s https://api.github.com/repos/geropl/git-mcp-go/releases/latest)
+DOWNLOAD_URL=$(echo $RELEASE | jq -r '.assets[] | select(.name | contains("linux")) | .browser_download_url')
+curl -L -o ./git-mcp-go $DOWNLOAD_URL
+chmod +x ./git-mcp-go
 
-# With write access enabled
-curl -s https://raw.githubusercontent.com/geropl/git-mcp-go/main/scripts/register-cline.sh | bash -s -- ~/my-repo true
+# Setup the mcp server (.gitpod.yml, dotfiles repo, etc.)
+./git-mcp-go setup -r /path/to/git/repository --tool=cline --auto-approve=allow-read-only
 ```
 
-The script will:
-1. Check if git-mcp-go is already installed, and download it if needed
-2. Register it with Cline by updating the MCP settings file
-3. Configure it with the specified repository path and optional parameters
+The setup command will:
+1. Copy the executable to the Cline MCP directory
+2. Create a registration script that configures Cline to use the Git MCP server
 
-#### Manual Configuration
+### Manual Configuration
 
 Alternatively, you can manually add this to your `claude_desktop_config.json`:
 
@@ -116,16 +149,6 @@ Alternatively, you can manually add this to your `claude_desktop_config.json`:
 }
 ```
 
-Or if you prefer the go-git implementation with write access enabled:
-
-```json
-"mcpServers": {
-  "git": {
-    "command": "/path/to/git-mcp-go",
-    "args": ["-r", "/path/to/git/repository", "--write-access", "--mode", "go-git"]
-  }
-}
-```
 
 ## Implementation Details
 
@@ -136,7 +159,9 @@ This server is implemented using:
 
 For operations not supported by go-git, the server falls back to using the Git CLI.
 
-## Testing
+## Development
+
+### Testing
 
 The server includes comprehensive tests for all Git operations. The tests are designed to run against both implementation modes:
 
@@ -150,7 +175,7 @@ go test ./pkg -v -run TestGitOperations/push
 
 The test suite creates temporary repositories for each test case and verifies that the operations work correctly in both modes.
 
-## Continuous Integration
+### Continuous Integration
 
 This project uses GitHub Actions for continuous integration and deployment:
 
@@ -169,19 +194,6 @@ git tag v1.0.0
 # Push the tag to GitHub
 git push origin v1.0.0
 ```
-
-## Development
-
-### VSCode Configuration
-
-This repository includes VSCode configuration files in the `.vscode` directory:
-
-- **settings.json**: Editor settings for Go development
-- **launch.json**: Debug configurations for running the server
-- **tasks.json**: Common tasks like build, test, and run
-- **extensions.json**: Recommended extensions for this project
-
-These configurations are shared with the repository, ensuring a consistent development experience for all contributors.
 
 ## License
 

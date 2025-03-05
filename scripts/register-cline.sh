@@ -14,6 +14,7 @@
 #   ./register-cline.sh ~/my-repo                    # Install with read-only mode (default)
 #   ./register-cline.sh ~/my-repo true               # Install with write operations enabled
 #   ./register-cline.sh ~/my-repo false go-git       # Specify mode
+echo "DEPRECATED: Use "git-mcp-go setup" instead."
 
 # Get parameters with defaults
 REPO_PATH=$1
@@ -72,29 +73,23 @@ mkdir -p "$CLINE_CONFIG_DIR"
 CLINE_MCP_SETTINGS="$CLINE_CONFIG_DIR/cline_mcp_settings.json"
 
 # Build the args array based on parameters
-SERVER_ARGS="["
+SERVER_ARGS="[\"serve\""
 
 # Add repository path if provided
 if [ -n "$REPO_PATH" ]; then
   # Expand the path to absolute path
   REPO_PATH=$(realpath "$REPO_PATH")
-  SERVER_ARGS="$SERVER_ARGS\"--repository=$REPO_PATH\""
+  SERVER_ARGS="$SERVER_ARGS, \"--repository=$REPO_PATH\""
 fi
 
 # Add write-access flag if enabled
 if [ "$WRITE_ACCESS" = "true" ]; then
-  if [ -n "$SERVER_ARGS" ] && [ "$SERVER_ARGS" != "[" ]; then
-    SERVER_ARGS="$SERVER_ARGS, "
-  fi
-  SERVER_ARGS="$SERVER_ARGS\"--write-access=true\""
+  SERVER_ARGS="$SERVER_ARGS, \"--write-access=true\""
 fi
 
 # Add mode if not the default
 if [ ! -z "$MODE" ]; then
-  if [ -n "$SERVER_ARGS" ] && [ "$SERVER_ARGS" != "[" ]; then
-    SERVER_ARGS="$SERVER_ARGS, "
-  fi
-  SERVER_ARGS="$SERVER_ARGS\"--mode=$MODE\""
+  SERVER_ARGS="$SERVER_ARGS, \"--mode=$MODE\""
 fi
 
 SERVER_ARGS="$SERVER_ARGS]"

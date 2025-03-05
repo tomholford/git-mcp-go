@@ -34,6 +34,35 @@ func NewGitServer(repoPath string, gitOps gitops.GitOperations, writeAccess bool
 	}
 }
 
+func GetReadOnlyToolNames() map[string]bool {
+	return map[string]bool{
+		"git_status":        true,
+		"git_diff_unstaged": true,
+		"git_diff_staged":   true,
+		"git_diff":          true,
+		"git_log":           true,
+		"git_show":          true,
+	}
+}
+
+func GetLocalOnlyToolNames() map[string]bool {
+	// local tools that alter state, complementing the read-only tools
+	result := map[string]bool{
+		"git_init": true,
+		"git_create_branch": true,
+		"git_checkout":      true,
+		"git_commit":        true,
+		"git_add":           true,
+		"git_reset":         true,
+	}
+
+	for toolName := range GetReadOnlyToolNames() {
+		result[toolName] = true
+	}
+	return result
+}
+
+
 // RegisterTools registers all Git tools with the MCP server
 func (s *GitServer) RegisterTools() {
 	// Register git_status tool
