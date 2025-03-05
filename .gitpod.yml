@@ -1,0 +1,5 @@
+
+tasks:
+  - init: go build ./... && go test ./...
+
+
