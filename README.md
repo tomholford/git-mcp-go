@@ -123,13 +123,14 @@ The easiest way to install and register the Git MCP server with Cline is to use 
 
 ```bash
 # Download linux binary for the latest release
-RELEASE=$(curl -s https://api.github.com/repos/geropl/git-mcp-go/releases/latest)
-DOWNLOAD_URL=$(echo $RELEASE | jq -r '.assets[] | select(.name | contains("linux")) | .browser_download_url')
+RELEASE="$(curl -s https://api.github.com/repos/geropl/git-mcp-go/releases/latest)"
+DOWNLOAD_URL="$(echo $RELEASE | jq -r '.assets[] | select(.name | contains("linux-amd64")) | .browser_download_url')"
 curl -L -o ./git-mcp-go $DOWNLOAD_URL
 chmod +x ./git-mcp-go
 
-# Setup the mcp server (.gitpod.yml, dotfiles repo, etc.)
-./git-mcp-go setup -r /path/to/git/repository --tool=cline --auto-approve=allow-read-only
+# Setup the mcp server (call from .gitpod.yml, dotfiles repo, etc.)
+./git-mcp-go setup -r /path/to/git/repository --tool=cline --auto-approve=allow-local-only
+rm -f ./git-mcp-go
 ```
 
 The setup command will:
