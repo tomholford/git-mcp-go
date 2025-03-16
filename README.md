@@ -42,6 +42,12 @@ cd git-mcp-go
 go build -o git-mcp-go .
 ```
 
+### Install with `go install`
+
+```bash
+go install github.com/geropl/git-mcp-go@latest
+```
+
 ## Usage
 
 ### Command Line Structure
@@ -145,11 +151,10 @@ Alternatively, you can manually add this to your `claude_desktop_config.json`:
 "mcpServers": {
   "git": {
     "command": "/path/to/git-mcp-go",
-    "args": ["-r", "/path/to/git/repository", "--mode", "shell"]
+    "args": ["serve", "-r", "/path/to/git/repository", "--mode", "shell"]
   }
 }
 ```
-
 
 ## Implementation Details
 
