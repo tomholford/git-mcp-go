@@ -26,7 +26,7 @@ func init() {
 	setupCmd.Flags().StringVarP(&repoPath, "repository", "r", "", "Git repository path")
 	setupCmd.Flags().StringVar(&mode, "mode", "shell", "Git operation mode: 'shell' or 'go-git'")
 	setupCmd.Flags().BoolVar(&writeAccess, "write-access", false, "Enable write access for remote operations (push)")
-	setupCmd.Flags().StringVar(&tool, "tool", "cline", "The AI assistant tool to set up for")
+	setupCmd.Flags().StringVar(&tool, "tool", "cline", "The AI assistant tool(s) to set up for (comma-separated, e.g., cline,roo-code)")
 	setupCmd.Flags().StringVar(&autoApprove, "auto-approve", "", "Comma-separated list of tools to auto-approve, or 'allow-read-only' to auto-approve all read-only tools, or 'allow-local-only' to auto-approve all local-only tools")
 }
 
@@ -62,20 +62,43 @@ This command sets up the Git MCP server for use with an AI assistant by installi
 			}
 		}
 
-		// Set up the tool-specific configuration
-		switch strings.ToLower(tool) {
-		case "cline":
-			if err := setupCline(binaryPath, repoPath, writeAccess, autoApprove); err != nil {
-				fmt.Printf("Error setting up Cline: %v\n", err)
-				os.Exit(1)
+		// Process each tool
+		tools := strings.Split(tool, ",")
+		hasErrors := false
+
+		for _, t := range tools {
+			t = strings.TrimSpace(t)
+			if t == "" {
+				continue
 			}
-		default:
-			fmt.Printf("Unsupported tool: %s\n", tool)
-			fmt.Println("Currently supported tools: cline")
-			os.Exit(1)
+
+			fmt.Printf("Setting up tool: %s\n", t)
+
+			// Set up the tool-specific configuration
+			var err error
+			switch strings.ToLower(t) {
+			case "cline":
+				err = setupCline(binaryPath, repoPath, writeAccess, autoApprove)
+			case "roo-code":
+				err = setupRooCode(binaryPath, repoPath, writeAccess, autoApprove)
+			default:
+				fmt.Printf("Unsupported tool: %s\n", t)
+				fmt.Println("Currently supported tools: cline, roo-code")
+				hasErrors = true
+				continue
+			}
+
+			if err != nil {
+				fmt.Printf("Error setting up %s: %v\n", t, err)
+				hasErrors = true
+			} else {
+				fmt.Printf("git-mcp-go binary successfully set up for %s\n", t)
+			}
 		}
 
-		fmt.Printf("git-mcp-go binary successfully set up for %s\n", tool)
+		if hasErrors {
+			os.Exit(1)
+		}
 	},
 }
 
@@ -149,26 +172,8 @@ func copySelfToBinaryPath(binaryPath string) error {
 	return nil
 }
 
-// setupCline sets up the git-mcp-go server for Cline
-func setupCline(binaryPath string, repoPath string, writeAccess bool, autoApprove string) error {
-	// Determine the Cline config directory
-	homeDir, err := os.UserHomeDir()
-	if err != nil {
-		return fmt.Errorf("failed to get user home directory: %w", err)
-	}
-
-	var configDir string
-	switch runtime.GOOS {
-	case "darwin":
-		configDir = filepath.Join(homeDir, "Library", "Application Support", "Code", "User", "globalStorage", "saoudrizwan.claude-dev", "settings")
-	case "linux":
-		configDir = filepath.Join(homeDir, ".vscode-server", "data", "User", "globalStorage", "saoudrizwan.claude-dev", "settings")
-	case "windows":
-		configDir = filepath.Join(homeDir, "AppData", "Roaming", "Code", "User", "globalStorage", "saoudrizwan.claude-dev", "settings")
-	default:
-		return fmt.Errorf("unsupported OS: %s", runtime.GOOS)
-	}
-
+// setupTool sets up the git-mcp-go server for a specific tool
+func setupTool(toolName string, binaryPath string, repoPath string, writeAccess bool, autoApprove string, configDir string) error {
 	// Create the config directory if it doesn't exist
 	if err := os.MkdirAll(configDir, 0755); err != nil {
 		return fmt.Errorf("failed to create config directory: %w", err)
@@ -254,6 +259,52 @@ func setupCline(binaryPath string, repoPath string, writeAccess bool, autoApprov
 		return fmt.Errorf("failed to write settings: %w", err)
 	}
 
-	fmt.Printf("Cline MCP settings updated at %s\n", settingsPath)
+	fmt.Printf("%s MCP settings updated at %s\n", toolName, settingsPath)
 	return nil
+}
+
+// setupCline sets up the git-mcp-go server for Cline
+func setupCline(binaryPath string, repoPath string, writeAccess bool, autoApprove string) error {
+	// Determine the Cline config directory
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		return fmt.Errorf("failed to get user home directory: %w", err)
+	}
+
+	var configDir string
+	switch runtime.GOOS {
+	case "darwin":
+		configDir = filepath.Join(homeDir, "Library", "Application Support", "Code", "User", "globalStorage", "saoudrizwan.claude-dev", "settings")
+	case "linux":
+		configDir = filepath.Join(homeDir, ".vscode-server", "data", "User", "globalStorage", "saoudrizwan.claude-dev", "settings")
+	case "windows":
+		configDir = filepath.Join(homeDir, "AppData", "Roaming", "Code", "User", "globalStorage", "saoudrizwan.claude-dev", "settings")
+	default:
+		return fmt.Errorf("unsupported OS: %s", runtime.GOOS)
+	}
+
+	return setupTool("Cline", binaryPath, repoPath, writeAccess, autoApprove, configDir)
+}
+
+// setupRooCode sets up the git-mcp-go server for Roo Code
+func setupRooCode(binaryPath string, repoPath string, writeAccess bool, autoApprove string) error {
+	// Determine the Roo Code config directory
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		return fmt.Errorf("failed to get user home directory: %w", err)
+	}
+
+	var configDir string
+	switch runtime.GOOS {
+	case "darwin":
+		configDir = filepath.Join(homeDir, "Library", "Application Support", "Code", "User", "globalStorage", "rooveterinaryinc.roo-cline", "settings")
+	case "linux":
+		configDir = filepath.Join(homeDir, ".vscode-server", "data", "User", "globalStorage", "rooveterinaryinc.roo-cline", "settings")
+	case "windows":
+		configDir = filepath.Join(homeDir, "AppData", "Roaming", "Code", "User", "globalStorage", "rooveterinaryinc.roo-cline", "settings")
+	default:
+		return fmt.Errorf("unsupported OS: %s", runtime.GOOS)
+	}
+
+	return setupTool("Roo Code", binaryPath, repoPath, writeAccess, autoApprove, configDir)
 }
